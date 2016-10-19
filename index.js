@@ -58,6 +58,8 @@ function csurf (options) {
     ? ['GET', 'HEAD', 'OPTIONS']
     : opts.ignoreMethods
 
+  var customReject = opts.customReject;
+
   if (!Array.isArray(ignoreMethods)) {
     throw new TypeError('option ignoreMethods must be an array')
   }
@@ -109,9 +111,13 @@ function csurf (options) {
 
     // verify the incoming token
     if (!ignoreMethod[req.method] && !tokens.verify(secret, value(req))) {
-      return next(createError(403, 'invalid csrf token', {
-        code: 'EBADCSRFTOKEN'
-      }))
+      if (customReject) {
+        req[customReject] = true;
+      } else {
+        return next(createError(403, 'invalid csrf token', {
+          code: 'EBADCSRFTOKEN'
+        }))
+      }
     }
 
     next()
